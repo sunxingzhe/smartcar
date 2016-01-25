@@ -49,6 +49,8 @@ void xingzhe::init()
     poolfd_num = 0;
 
     get_my_addr();
+
+    setup_mc_socket();
 }
 
 void xingzhe::get_my_addr()
@@ -128,7 +130,8 @@ int xingzhe::setup_mc_socket()
     m_state = WAITING_STATE;
     fdset[MC_MESSAGE].fd = fd_mc;
     fdset[MC_MESSAGE].events = POLLIN;
-    msg_handler[MC_MESSAGE] = &xingzhe::deal_mc_msg;
+//    msg_handler[MC_MESSAGE] = &xingzhe::deal_mc_msg;
+//    msg_handler[MC_MESSAGE] = &xingzhe::deal_mc_msg;
     poolfd_num++;
 
     return 0;
@@ -154,7 +157,8 @@ void xingzhe::proc()
                 continue;
             }
             if(fdset[0].revents & POLLIN) {
-                //((xingzhe*)this)->xingzhe::msg_handler[0](NULL);
+                msg_handler[0](NULL);
+//                (this->*msg_handler[0])(NULL);
             }
         }
         usleep(10);
@@ -363,7 +367,7 @@ int xingzhe::deal_tm_msg(void *data)
     return 0;
 }
 
-int xingzhe::create_timer(int int_msec)
+int xingzhe::create_timer(int int_msec, u_int32 event_id, MsgHandler handler)
 {
     struct itimerspec value;
     int fd;
@@ -377,7 +381,8 @@ int xingzhe::create_timer(int int_msec)
     timerfd_settime(fd, 0, &value, NULL);
     fdset[TM_MESSAGE_0].fd = fd;
     fdset[TM_MESSAGE_0].events = POLLIN;
-    msg_handler[TM_MESSAGE_0] = &xingzhe::deal_tm_msg;
+//    msg_handler[TM_MESSAGE_0] = &xingzhe::deal_tm_msg;
+    msg_handler[TM_MESSAGE_0] = handler;
     poolfd_num++;
     
     return fd;

@@ -7,6 +7,8 @@
 #include "ear.h"
 #include "foot.h"
 
+typedef void(*MsgHandler)(void*);
+
 struct commu_param {
     struct s_base_info m_base;
     u_int32 d_base_ipaddr;
@@ -24,18 +26,19 @@ public:
     xingzhe(char *name);
     ~xingzhe();
 
+    void init();
     void proc();
 
     typedef int(xingzhe::*XZ_MSG_HANDLER)(void *);
-    XZ_MSG_HANDLER msg_handler[64];
+//    XZ_MSG_HANDLER msg_handler[64];
+    MsgHandler msg_handler[64];
 
 private:
-    void init();
     void get_my_addr();
     int wait_for_base();
     int setup_mc_socket();
     int setup_regular_report();
-    int create_timer(int msec);
+    int create_timer(int msec, u_int32 event_id, MsgHandler);
     int deal_mc_msg(void *data);
     int deal_tm_msg(void *data);
 
