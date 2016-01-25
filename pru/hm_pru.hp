@@ -1,0 +1,154 @@
+#ifndef _HM_PRU_HP_
+#define _HM_PRU_HP_
+
+
+#define AM33XX
+
+// ***************************************
+// *      Global Macro definitions       *
+// ***************************************
+
+// Refer to this mapping in the file - \prussdrv\include\pruss_intc_mapping.h
+#define PRU0_PRU1_INTERRUPT     17
+#define PRU1_PRU0_INTERRUPT     18
+#define PRU0_ARM_INTERRUPT      19
+#define PRU1_ARM_INTERRUPT      20
+#define ARM_PRU0_INTERRUPT      21
+#define ARM_PRU1_INTERRUPT      22
+
+#define CONST_PRUCFG    C4
+#define CONST_PRUDRAM   C24
+#define CONST_L3RAM     C30
+#define CONST_DDR       C31
+
+// Address for the Constant table Programmable Pointer Register 0(CTPPR_0)
+#define CONTROL_0       0x22000
+#define CONTROL_1       0x24000
+#define CTBIR_0         0x22020
+// Address for the Constant table Programmable Pointer Register 0(CTPPR_0)
+#define CTBIR_1         0x22024
+
+// Address for the Constant table Programmable Pointer Register 0(CTPPR_0)
+#define CTPPR_0         0x22028
+// Address for the Constant table Programmable Pointer Register 1(CTPPR_1)
+#define CTPPR_1         0x2202C
+
+
+#define M1_DECODER_ADDR         0x481ac000
+#define M1_DECODER1_COUNT_BIT   6
+#define M1_DECODER2_COUNT_BIT   7
+
+#define M2_DECODER_ADDR         0x481AE000
+#define M2_DECODER1_COUNT_BIT   15
+#define M2_DECODER2_COUNT_BIT   16
+
+#define GPIO_DATAIN          0x138
+#define GPIO_CLEARDATAOUT    0x190
+#define GPIO_SETDATAOUT      0x194
+
+.macro DELAY_100
+MOV r10, 0
+DELAY:
+    ADD r10, r10, 1
+    QBNE DELAY, r10, 0xe0
+.endm
+
+/*************** PRU0 ***********************/
+.macro LEFT_MOTOR_SPEED_PROC
+    MOV r0, CONTROL_0
+    MOV r1, 33       //
+
+    MOV r2, 0         // r2 stores the cycle counter
+    MOV r3, 0xffffffff    // r3 stores infinite value
+    MOV r5, 0         // zero
+	
+LOOP:
+    MOV r4, 0         // r4 stores the rotation of the "wheel"
+
+	LBBO r6, r0, 0, 4  // get configuration
+	SET r6.t1    // ENABLE
+	SET r6.t3	 // PRU Cycle Counter Enabled
+	SBBO r6, r0, 0, 4  // save configuration
+
+	SBBO r5, r0, 0xc, 4   // zero the cycle counter
+	
+WAIT_FOR_PULSE:
+    WBS r31.t14
+    WBC r31.t14
+    ADD r4, r4, 1
+    QBGT WAIT_FOR_PULSE, r4, r1
+
+STORE_RESULT:
+	/* stop cycle counter */
+	LBBO r6, r0, 0, 4
+	CLR r6.t3
+	SBBO r6, r0, 0, 4
+
+    LBBO r2, r0, 0xC, 4  // read the cycle counter
+    //Store result in into memory using constant table
+    SBCO r2, CONST_PRUDRAM, 0, 4
+
+	SBCO r4, CONST_PRUDRAM, 4, 4
+
+    JMP LOOP
+
+ENDM:
+
+.endm
+
+
+/*************** PRU1 ***********************/
+.macro RIGHT_MOTOR_SPEED_PROC
+    MOV r0, CONTROL_1
+    MOV r1, 33       // 
+
+    MOV r2, 0         // r2 stores the cycle counter
+    MOV r3, 0xffffffff    // r3 stores infinite value
+    MOV r5, 0         // zero
+	
+LOOP:
+    MOV r4, 0         // r4 stores the rotation of the "wheel"
+
+	LBBO r6, r0, 0, 4  // get configuration
+	SET r6.t1    // ENABLE
+	SET r6.t3	 // PRU Cycle Counter Enabled
+	SBBO r6, r0, 0, 4  // save configuration
+
+	SBBO r5, r0, 0xc, 4   // zero the cycle counter
+	
+WAIT_FOR_PULSE:
+    WBS r31.t8
+    WBC r31.t8
+    ADD r4, r4, 1
+    QBGT WAIT_FOR_PULSE, r4, r1
+
+STORE_RESULT:
+	/* stop cycle counter */
+	LBBO r6, r0, 0, 4  // get configuration
+	CLR r6.t3
+	SBBO r6, r0, 0, 4  // save configuration
+
+    LBBO r2, r0, 0xC, 4  // read the cycle counter
+    //Store result in into memory using constant table
+    SBCO r2, CONST_PRUDRAM, 0, 4
+
+	SBCO r4, CONST_PRUDRAM, 4, 4
+
+    JMP LOOP
+ENDM:
+
+.endm
+
+
+
+// ***************************************
+// *    Global Structure Definitions     *
+// ***************************************
+
+
+// ***************************************
+// *     Global Register Assignments     *
+// ***************************************
+
+
+#endif //_PRU_memAccessPRUDataRAM_HP_

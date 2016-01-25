@@ -1,0 +1,8 @@
+In file included from main.cpp:12:0:
+xingzhe.h:50:27: error: field ‘fdset’ has incomplete type
+     struct pollfd fdset[64];
+                           ^
+xingzhe.h:51:5: error: ‘XZ_MSG_HANDLER’ does not name a type
+     XZ_MSG_HANDLER msg_handler[64];
+     ^
+make: *** [main.o] Error 1
